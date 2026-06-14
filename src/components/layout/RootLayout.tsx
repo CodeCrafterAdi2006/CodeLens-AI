@@ -10,8 +10,20 @@ import {
   UserCircle 
 } from "lucide-react";
 
+import { useState, useEffect } from "react";
+import { api } from "@/lib/api";
+
 export function RootLayout() {
   const location = useLocation();
+  const [user, setUser] = useState<any>(api.getUser());
+
+  useEffect(() => {
+    const handleAuthChange = () => {
+      setUser(api.getUser());
+    };
+    window.addEventListener("authChange", handleAuthChange);
+    return () => window.removeEventListener("authChange", handleAuthChange);
+  }, []);
 
   const navItems = [
     { name: "New Analysis", path: "/analyze", icon: <Search className="w-4 h-4" /> },
@@ -43,11 +55,21 @@ export function RootLayout() {
         </div>
         
         <div className="flex items-center gap-4">
-          <div className="hidden sm:block text-right mr-2">
-            <p className="text-xs font-semibold text-primary">Jane Student</p>
-            <p className="text-[10px] text-gray-500">PRO PLAN</p>
-          </div>
-          <Link to="/profile" className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 border border-[#444]"></Link>
+          {user ? (
+            <>
+              <div className="hidden sm:block text-right mr-2">
+                <p className="text-xs font-semibold text-primary">{user.name}</p>
+                <p className="text-[10px] text-zinc-500">LEARNER</p>
+              </div>
+              <Link to="/profile" className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 border border-[#444] flex items-center justify-center font-bold text-xs text-white">
+                {user.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
+              </Link>
+            </>
+          ) : (
+            <Link to="/profile" className="text-xs font-bold uppercase tracking-wider text-blue-400 hover:text-blue-300 border border-blue-500/20 px-3 py-1.5 rounded bg-blue-500/5 transition-colors">
+              Sign In
+            </Link>
+          )}
         </div>
       </header>
 

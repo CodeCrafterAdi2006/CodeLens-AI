@@ -12,12 +12,14 @@ import { Architecture } from "./pages/Architecture";
 import { Roadmap } from "./pages/Roadmap";
 import { Recommendations } from "./pages/Recommendations";
 import { Profile } from "./pages/Profile";
+import { ShareViewer } from "./pages/ShareViewer";
 
 export default function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/share/:reportId" element={<ShareViewer />} />
         
         {/* App Routes with Sidebar/Navbar */}
         <Route element={<RootLayout />}>
