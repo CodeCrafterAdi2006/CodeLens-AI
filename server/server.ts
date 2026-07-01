@@ -1,4 +1,7 @@
+// MUST BE FIRST: Load and validate env variables before any other service imports are evaluated.
+// This prevents dependent modules (like db or ai connections) from initializing with undefined configs.
 import { env } from './config/env';
+
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
@@ -13,6 +16,8 @@ import {
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Use the validated configuration from our env module instead of raw process.env lookups
 const JWT_SECRET = env.JWT_SECRET;
 
 app.use(cors());

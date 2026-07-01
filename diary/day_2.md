@@ -36,5 +36,10 @@ Today, we built a safety validator for our environment variables, ensuring our s
 It was a module initialization ordering issue. When esbuild bundled `server.ts`, it saw a side-effect import (`import './config/env'`) and a named import (`import { env } ...`). The bundler evaluated the exports of `env.ts` before the module body had fully finished running, resulting in `env` resolving to `undefined`. Combining them into a single named import ensures correct sequence execution.
 
 ### Q3: Why is APP_URL an "Advisory" warning and not "Critical"?
-Because the application can still boot and run locally by defaulting to `http://localhost:3000`. However, we want a warning so that if a developer deploys the site to production and forgets to update `APP_URL`, they are alerted that their self-referential links (like shared report URLs) will point to the wrong address.
+It remains Advisory for local development because the app can safely default to `http://localhost:3000`. However, we made this validation context-aware: if `NODE_ENV === 'production'`, the missing `APP_URL` escalates to a **Critical** error and crashes the server. This prevents the server from silently running in production while generating broken `localhost` sharing links for real-world users.
+
+### Q4: How is version control handled in a production-grade environment?
+In production, directly pushing to `main` is blocked. Developers create feature branches (e.g., `feature/jwt-auth`), make incremental commits, and open a Pull Request (PR). The PR must pass automated CI pipeline checks (linting, tests) and receive peer code reviews before it is allowed to merge into the main branch.
+
+
 
