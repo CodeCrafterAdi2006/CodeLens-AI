@@ -1,6 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
-import { WebSignals } from './collector';
-import { Report } from './db';
+import { WebSignals } from './scraperService';
+import { Report } from '../db/db';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -88,7 +88,7 @@ export async function analyzeURLSignals(signals: WebSignals, userId: string | nu
 
       const responseText = response.text || '';
       const parsedData = JSON.parse(responseText.trim());
-      
+
       return {
         userId,
         inputType: 'url',
@@ -191,8 +191,8 @@ function getMimeType(filename: string): string {
 
 // HEURISTICS FALLBACK GENERATOR
 function generateHeuristicReport(
-  inputVal: string, 
-  inputType: 'url' | 'image' | 'desc', 
+  inputVal: string,
+  inputType: 'url' | 'image' | 'desc',
   signals: WebSignals | null,
   userId: string | null
 ): Report {

@@ -1,18 +1,19 @@
+import { env } from './config/env';
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import path from 'path';
-import { db, hashPassword } from './db';
-import { collectSignals } from './collector';
+import { db, hashPassword } from './db/db';
+import { collectSignals } from './services/scraperService';
 import {
   analyzeURLSignals,
   analyzeTextDescription,
   analyzeImageScreenshot
-} from './ai';
+} from './services/aiService';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const JWT_SECRET = process.env.JWT_SECRET || 'codelens-super-secret-key';
+const JWT_SECRET = env.JWT_SECRET;
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Ensure large base64 screenshot uploads work
@@ -139,16 +140,16 @@ app.post('/api/analyze/url', optionalAuthenticateToken, async (req: Authenticate
     }
 
     const userId = req.user ? req.user.id : null;
-    
+
     // 1. Gather observable page indicators
     const signals = await collectSignals(url);
-    
+
     // 2. Perform AI analysis combining extracted metrics
     const report = await analyzeURLSignals(signals, userId);
-    
+
     // 3. Save report in local store
     const savedReport = await db.createReport(report);
-    
+
     res.json(savedReport);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -257,7 +258,7 @@ app.post('/api/reports/:id/feedback', optionalAuthenticateToken, async (req: Aut
   try {
     const { id } = req.params;
     const { rating, comments, name } = req.body;
-    
+
     if (!rating || rating < 1 || rating > 5) {
       return res.status(400).json({ error: 'Rating between 1 and 5 is required' });
     }
