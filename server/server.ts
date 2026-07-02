@@ -6,13 +6,13 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import path from 'path';
-import { db, hashPassword } from './db/db';
-import { collectSignals } from './services/scraperService';
+import { db, hashPassword } from '@server/db/db';
+import { collectSignals } from '@server/services/scraperService';
 import {
   analyzeURLSignals,
   analyzeTextDescription,
   analyzeImageScreenshot
-} from './services/aiService';
+} from '@server/services/aiService';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
