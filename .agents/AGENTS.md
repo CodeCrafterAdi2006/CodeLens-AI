@@ -78,3 +78,12 @@ Issues flagged by the auditor that are not yet resolved:
 | `server.ts` still has inline route definitions | Day 1 | Day 8-9 (Phase 3) | 🟡 Deferred (by design) |
 | Gemini advisory mode not surfaced in API response | Day 2 | Day 13 (health endpoint) | 🟡 Deferred (by design) |
 | APP_URL critical-in-prod check must be tested in docker | Day 2 | Day 18 (Dockerfile) | 🟡 Deferred (by design) |
+
+---
+
+## 📌 DAY-SPECIFIC NOTES (Pre-loaded from Auditor)
+
+### Day 4 (Knex Setup)
+- Knex auto-creates `knex_migrations` and `knex_migrations_lock` tables on first run.
+- **DO NOT delete or manually edit these tables.** They track which migrations have already run.
+- If unfamiliar tables appear in a database viewer (DBeaver etc.), check if they are Knex internals before touching them.
