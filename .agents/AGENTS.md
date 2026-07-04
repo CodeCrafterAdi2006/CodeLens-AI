@@ -87,3 +87,8 @@ Issues flagged by the auditor that are not yet resolved:
 - Knex auto-creates `knex_migrations` and `knex_migrations_lock` tables on first run.
 - **DO NOT delete or manually edit these tables.** They track which migrations have already run.
 - If unfamiliar tables appear in a database viewer (DBeaver etc.), check if they are Knex internals before touching them.
+
+### Day 5 (Versioned Migrations)
+- **Verification Bar**: Once you run the first migration, open DBeaver and verify that exactly four tables exist: `users`, `reports`, `knex_migrations`, and `knex_migrations_lock`.
+- Tell the AI mentor exactly what tables exist before marking the day complete.
+
