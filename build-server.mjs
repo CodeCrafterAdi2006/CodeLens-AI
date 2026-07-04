@@ -25,7 +25,7 @@ await esbuild.build({
 
   // Packages that should NOT be bundled (they'll be loaded at runtime from node_modules)
   // We exclude these because bundling native/compiled packages causes issues
-  external: ['express', 'cors', 'jsonwebtoken', 'bcryptjs', 'dotenv'],
+  external: ['express', 'cors', 'jsonwebtoken', 'bcryptjs', 'dotenv', 'knex', 'better-sqlite3'],
 
   // Native esbuild alias support: maps @server/* → ./server/* and @/* → ./src/*
   // This is the runtime equivalent of the tsconfig.json "paths" setting
