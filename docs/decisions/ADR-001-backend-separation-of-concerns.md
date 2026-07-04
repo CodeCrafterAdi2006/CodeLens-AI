@@ -30,3 +30,9 @@ We also configured TypeScript `paths` aliases (`@server/*`) and an esbuild nativ
 ## Alternatives Considered
 - **Monolithic single file**: Rejected. Grows unmaintainable beyond ~200 lines.
 - **Microservices**: Rejected. Premature for a student-scale project at this stage.
+
+## Rejected Approaches
+### esbuild-plugin-tsconfig-paths
+*   **Tried**: Install `esbuild-plugin-tsconfig-paths` and pass it via the `plugins` array in `build-server.mjs`.
+*   **Failed**: The plugin uses TypeScript's internal transformer API (`isImportDeclaration`). Our TypeScript version (5.8.x) is newer than the plugin expected, causing the transformer to receive `undefined` node objects and crash immediately.
+*   **Resolution**: Replaced with esbuild's native `alias` config option, which is stable, has zero external dependencies, and resolves path mappings at bundle-time without touching the TypeScript compiler API.

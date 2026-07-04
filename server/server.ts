@@ -1,6 +1,6 @@
 // MUST BE FIRST: Load and validate env variables before any other service imports are evaluated.
 // This prevents dependent modules (like db or ai connections) from initializing with undefined configs.
-import { env } from './config/env';
+import { env } from '@server/config/env';
 
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
