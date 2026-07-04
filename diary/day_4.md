@@ -34,3 +34,12 @@ These are internal tables automatically created by Knex.
 
 ### Q2: Why do we use a singleton connection pool?
 Creating a database connection is expensive. If we imported Knex configuration directly in every route file and created new instances, each file would open separate connection pools. In SQLite, this would lead to "database is locked" errors during simultaneous writes. A singleton guarantees only one connection pool exists.
+
+### Q3: What specific failure mode does the singleton connection pool prevent in SQLite?
+SQLite is a local file-based database that locks the entire file during write operations to guarantee data integrity. If we instantiated multiple Knex connection pools across our codebase, they would compete for this lock under concurrent writes, resulting in `SQLITE_BUSY` (database is locked) crashes. A singleton connection pool guarantees a single connection queue, resolving contention.
+
+### Q4: Why did we choose `better-sqlite3` over the standard `sqlite3` package?
+*   `sqlite3` uses asynchronous callbacks.
+*   `better-sqlite3` uses a synchronous API. Because SQLite is a local file, running queries synchronously is actually faster due to less context-switching overhead.
+*   **The Interview Answer**: *"For a low-concurrency local portfolio tool, a synchronous API is simpler and faster. However, if we were scaling this up to a high-concurrency production system, we would migrate to PostgreSQL with an asynchronous driver to prevent blocking Node's single-threaded event loop."*
+
