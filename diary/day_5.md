@@ -31,3 +31,8 @@ Today, we constructed our relational database schema using versioned migration f
 
 ### Q1: Why must the 'down' function drop tables in the reverse order of the 'up' function?
 Because of foreign key constraints. You cannot delete the `users` table if `reports` is still pointing to it. You must delete the dependent tables first (`feedback` -> `reports` -> `users`) so that no orphaned relations exist during database destruction.
+
+### Q2: Why did we choose onDelete('SET NULL') for reports.userId instead of CASCADE?
+*   **The Defense**: To preserve aggregate metrics and analytics (e.g., framework popularity stats, total scan count). If we used CASCADE, we would lose historical data.
+*   **Access Control**: Our dashboard query matches specific user IDs (`WHERE userId = ?`). Since a logged-in user's ID is never null, orphaned reports are automatically hidden from all user dashboards. They can only be accessed via direct share UUID links, and only if the creator marked the report as `isShared: true` before deleting their account.
+
