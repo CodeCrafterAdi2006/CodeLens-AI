@@ -7,35 +7,52 @@
 
 import type { Knex } from 'knex';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// 1. Detect if we are running in the Knex CLI context (working dir ends with 'db')
+const isDbFolder = process.cwd().endsWith('db') || process.cwd().endsWith('db/');
+
+// 2. Resolve database, migrations, and seeds paths dynamically
+const dbPath = isDbFolder
+    ? path.join(process.cwd(), '../../codelens.db')
+    : path.join(process.cwd(), 'codelens.db');
+
+const migrationsPath = isDbFolder
+    ? path.join(process.cwd(), 'migrations')
+    : path.join(process.cwd(), 'server/db/migrations');
+
+const seedsPath = isDbFolder
+    ? path.join(process.cwd(), 'seeds')
+    : path.join(process.cwd(), 'server/db/seeds');
 
 const config: Knex.Config = {
-    // Use better-sqlite3 driver (faster and more reliable than the legacy sqlite3 package)
     client: 'better-sqlite3',
-
     connection: {
-        // Use __dirname to navigate up to the root folder so it resolves consistently
-        filename: path.join(__dirname, '../../codelens.db'),
+        filename: dbPath,
     },
-
-    //Knex requires this flag for SQLite to prevent it from inserting "undefined" values when
-    //a column is not explicitly set
     useNullAsDefault: true,
 
+    pool: {
+        afterCreate: (conn: any, cb: any) => {
+            try {
+                // Force SQLite to enforce foreign key constraints at connection creation
+                conn.pragma('foreign_keys = ON');
+                cb(null, conn);
+            } catch (err) {
+                cb(err, conn);
+            }
+        },
+    },
+
     migrations: {
-        //__dirname points to the server/db folder, so we just join it with 'migrations'
-        directory: path.join(__dirname, 'migrations'),
-        // Use Typescript migrations files
+        directory: migrationsPath,
         extension: 'ts',
     },
 
     seeds: {
-        // Seed files for populating the database with test data
-        directory: path.join(__dirname, 'seeds'),
+        directory: seedsPath,
         extension: 'ts',
     },
+
 
 };
 

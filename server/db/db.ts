@@ -1,8 +1,5 @@
-import fs from 'fs/promises';
-import path from 'path';
 import crypto from 'crypto';
-
-const DB_FILE = path.join(process.cwd(), 'database.json');
+import knex from './connection';
 
 export interface User {
   id: string;
@@ -83,113 +80,124 @@ export interface Feedback {
   createdAt: string;
 }
 
-interface DBData {
-  users: User[];
-  reports: Report[];
-  feedback: Feedback[];
-}
-
-async function readDB(): Promise<DBData> {
-  try {
-    const data = await fs.readFile(DB_FILE, 'utf-8');
-    return JSON.parse(data);
-  } catch (err) {
-    const initialData: DBData = { users: [], reports: [], feedback: [] };
-    await fs.writeFile(DB_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
-    return initialData;
-  }
-}
-
-async function writeDB(data: DBData): Promise<void> {
-  await fs.writeFile(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
+// Helper to deserialize SQLite text columns back into arrays/objects
+function parseReportJSON(row: any): Report {
+  return {
+    ...row,
+    isShared: Boolean(row.isShared),
+    techStack: JSON.parse(row.techStack),
+    architectureNodes: JSON.parse(row.architectureNodes),
+    uiUxAnalysis: JSON.parse(row.uiUxAnalysis),
+    databaseHypothesis: JSON.parse(row.databaseHypothesis),
+    developmentWorkflow: JSON.parse(row.developmentWorkflow),
+    learningRoadmap: JSON.parse(row.learningRoadmap),
+    improvementSuggestions: JSON.parse(row.improvementSuggestions),
+    missingInferences: JSON.parse(row.missingInferences),
+  };
 }
 
 export function hashPassword(password: string): string {
+  // Note: We use SHA-256 for now to avoid breaking existing users.
+  // In Day 8, we will replace this with secure Bcrypt.
   return crypto.createHash('sha256').update(password).digest('hex');
 }
 
 export const db = {
   // User Operations
   async getUserById(id: string): Promise<User | null> {
-    const data = await readDB();
-    return data.users.find(u => u.id === id) || null;
+    const user = await knex('users').where({ id }).first();
+    return user || null;
   },
 
   async getUserByEmail(email: string): Promise<User | null> {
-    const data = await readDB();
-    return data.users.find(u => u.email.toLowerCase() === email.toLowerCase()) || null;
+    const user = await knex('users')
+      .whereRaw('LOWER(email) = ?', [email.toLowerCase()])
+      .first();
+    return user || null;
   },
 
   async createUser(email: string, passwordPlain: string, name: string): Promise<User> {
-    const data = await readDB();
-    const existing = data.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const existing = await this.getUserByEmail(email);
     if (existing) throw new Error('User already exists');
 
     const newUser: User = {
       id: crypto.randomUUID(),
-      email,
+      email: email.toLowerCase(),
       passwordHash: hashPassword(passwordPlain),
       name,
       createdAt: new Date().toISOString()
     };
 
-    data.users.push(newUser);
-    await writeDB(data);
+    await knex('users').insert(newUser);
     return newUser;
   },
 
   // Report Operations
   async getReports(userId: string | null): Promise<Report[]> {
-    const data = await readDB();
     if (!userId) return [];
-    return data.reports.filter(r => r.userId === userId).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const reports = await knex('reports')
+      .where({ userId })
+      .orderBy('createdAt', 'desc');
+    return reports.map(parseReportJSON);
   },
 
   async getReportById(id: string): Promise<Report | null> {
-    const data = await readDB();
-    return data.reports.find(r => r.id === id) || null;
+    const report = await knex('reports').where({ id }).first();
+    return report ? parseReportJSON(report) : null;
   },
 
   async createReport(reportData: Omit<Report, 'id' | 'createdAt' | 'isShared'>): Promise<Report> {
-    const data = await readDB();
-    const newReport: Report = {
+    const newReportId = crypto.randomUUID();
+    const createdAt = new Date().toISOString();
+
+    // Serialize objects/arrays into JSON strings for SQLite compatibility
+    const dbReport = {
       ...reportData,
-      id: crypto.randomUUID(),
-      isShared: false,
-      createdAt: new Date().toISOString()
+      id: newReportId,
+      isShared: 0,
+      createdAt,
+      techStack: JSON.stringify(reportData.techStack),
+      architectureNodes: JSON.stringify(reportData.architectureNodes),
+      uiUxAnalysis: JSON.stringify(reportData.uiUxAnalysis),
+      databaseHypothesis: JSON.stringify(reportData.databaseHypothesis),
+      developmentWorkflow: JSON.stringify(reportData.developmentWorkflow),
+      learningRoadmap: JSON.stringify(reportData.learningRoadmap),
+      improvementSuggestions: JSON.stringify(reportData.improvementSuggestions),
+      missingInferences: JSON.stringify(reportData.missingInferences),
     };
 
-    data.reports.push(newReport);
-    await writeDB(data);
-    return newReport;
+    await knex('reports').insert(dbReport);
+
+    return {
+      ...reportData,
+      id: newReportId,
+      isShared: false,
+      createdAt
+    };
   },
 
   async updateReportSharing(id: string, isShared: boolean): Promise<Report | null> {
-    const data = await readDB();
-    const reportIndex = data.reports.findIndex(r => r.id === id);
-    if (reportIndex === -1) return null;
-    
-    data.reports[reportIndex].isShared = isShared;
-    await writeDB(data);
-    return data.reports[reportIndex];
+    const rowsUpdated = await knex('reports')
+      .where({ id })
+      .update({ isShared: isShared ? 1 : 0 });
+
+    if (rowsUpdated === 0) return null;
+    return this.getReportById(id);
   },
 
   // Feedback Operations
   async createFeedback(feedbackData: Omit<Feedback, 'id' | 'createdAt'>): Promise<Feedback> {
-    const data = await readDB();
     const newFeedback: Feedback = {
       ...feedbackData,
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString()
     };
 
-    data.feedback.push(newFeedback);
-    await writeDB(data);
+    await knex('feedback').insert(newFeedback);
     return newFeedback;
   },
 
   async getFeedbackByReport(reportId: string): Promise<Feedback[]> {
-    const data = await readDB();
-    return data.feedback.filter(f => f.reportId === reportId);
+    return knex('feedback').where({ reportId });
   }
 };
