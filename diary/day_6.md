@@ -4,11 +4,13 @@
 ## 1. What We Accomplished Today
 Today, we enforced database constraints in SQLite and refactored our core query service layer to interface with our new relational schema.
 
-*   **Enforced Relational Integrity**: Configured the Knex connection pool `afterCreate` callback to run `PRAGMA foreign_keys = ON;` in SQLite.
-*   **Resolved Bundling Path Mismatch**: Troubleshooting a compiler warning and runtime crash caused by `import.meta.url` in CommonJS. Resolved it by building a warning-free, context-aware path detector using `process.cwd()`.
+*   **Enforced Relational Integrity**: Configured the Knex connection pool `afterCreate` callback to execute `PRAGMA foreign_keys = ON;` in SQLite connection boots.
+*   **Decoupled CLI from Runtime Connections**: Discovered a compiler warning and runtime boot crash caused by importing `knexfile.ts` into our runtime connection pool. Resolved it by refactoring `connection.ts` to construct the database connection dynamically using `env.DATABASE_PATH`, leaving `knexfile.ts` strictly CLI-only. This isolates ESM-only commands (like `import.meta.url`) from entering the compiled CommonJS bundle.
+*   **Configured Env Database Path**: Stored the SQLite file configuration inside `DATABASE_PATH` in `.env` and `.env.example`, validating it at boot time inside `/server/config/env.ts` to prevent hardcoded file resolutions.
 *   **Refactored Query Service Layer**: Rewrote `/server/db/db.ts` to replace flat-file JSON operations with clean Knex SQL queries.
 *   **Structured Data Serialization**: Implemented a JSON helper (`parseReportJSON`) to serialize complex arrays (like lists of architecture nodes and improvements) into text columns for database writes and deserialize them back for reads.
 *   **Failure-State Verification**: Wrote a diagnostic test script to prove SQLite rejects invalid records, catching a connection-level false positive before getting a genuine `FOREIGN KEY constraint failed` database lock error.
+
 
 ---
 

@@ -1,40 +1,33 @@
 // knexfile.ts
-// Single responsibility: Knex database connection configuration.
-// This file is read by Knex CLI (for running migrations) and by our
-// db connection module at runtime. We use better-sqlite3 as the driver
-// because it is synchronous, zero-config, and ideal for single-server
-// deployments without a separate database process to manage
+// CLI-Only configuration: This file is read exclusively by the Knex CLI
+// to generate and execute migrations and seeds. It is NEVER imported by
+// the Express runtime, which keeps it out of the production CJS bundle.
 
 import type { Knex } from 'knex';
 import path from 'path';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
 
-// 1. Detect if we are running in the Knex CLI context (working dir ends with 'db')
-const isDbFolder = process.cwd().endsWith('db') || process.cwd().endsWith('db/');
+// Resolve the directory where knexfile.ts lives (in ESM CLI scope)
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// 2. Resolve database, migrations, and seeds paths dynamically
-const dbPath = isDbFolder
-    ? path.join(process.cwd(), '../../codelens.db')
-    : path.join(process.cwd(), 'codelens.db');
+// Load the root-level .env file so the CLI knows where our database file is
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
-const migrationsPath = isDbFolder
-    ? path.join(process.cwd(), 'migrations')
-    : path.join(process.cwd(), 'server/db/migrations');
-
-const seedsPath = isDbFolder
-    ? path.join(process.cwd(), 'seeds')
-    : path.join(process.cwd(), 'server/db/seeds');
+const dbPath = process.env.DATABASE_PATH || 'codelens.db';
 
 const config: Knex.Config = {
     client: 'better-sqlite3',
     connection: {
-        filename: dbPath,
+        // Resolve relative to the root folder (two levels up from server/db)
+        filename: path.resolve(__dirname, '../../', dbPath),
     },
     useNullAsDefault: true,
 
+    // Enforce foreign keys during CLI seeding & migrations too
     pool: {
         afterCreate: (conn: any, cb: any) => {
             try {
-                // Force SQLite to enforce foreign key constraints at connection creation
                 conn.pragma('foreign_keys = ON');
                 cb(null, conn);
             } catch (err) {
@@ -44,16 +37,13 @@ const config: Knex.Config = {
     },
 
     migrations: {
-        directory: migrationsPath,
+        directory: path.join(__dirname, 'migrations'),
         extension: 'ts',
     },
-
     seeds: {
-        directory: seedsPath,
+        directory: path.join(__dirname, 'seeds'),
         extension: 'ts',
     },
-
-
 };
 
 export default config;

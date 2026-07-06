@@ -55,4 +55,6 @@ export const env = {
     GEMINI_API_KEY: process.env.GEMINI_API_KEY,
     APP_URL: process.env.APP_URL || 'http://localhost:3000',
     PORT: process.env.PORT || 3001,
+    // Define path to database file, defaulting to codelens.db in the project root
+    DATABASE_PATH: process.env.DATABASE_PATH || 'codelens.db',
 };
