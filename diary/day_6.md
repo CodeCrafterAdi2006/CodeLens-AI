@@ -33,3 +33,6 @@ A false positive occurs when a test reports a "success" (e.g. the write was bloc
 
 ### Q2: What is the difference between SQLite's `better-sqlite3` and `sqlite3` connection callback syntaxes?
 `sqlite3` uses async callbacks (e.g. `conn.run('PRAGMA...', callback)`), whereas `better-sqlite3` operates synchronously, providing a direct Database class instance where we run pragmas synchronously (e.g. `conn.pragma('foreign_keys = ON')`) without needing standard callbacks.
+### Q3: What is the architectural tradeoff of storing nested objects/arrays as serialized JSON strings in text columns?
+*   **The Tradeoff**: Storing nested objects (like `techStack` and `architectureNodes`) as serialized JSON strings keeps the SQLite schema simple and avoids complex multi-table joins. However, it blocks our ability to run standard SQL queries or filters inside those data structures (e.g. we cannot reliably execute queries like `WHERE techStack LIKE '%React%'` or sort on nested properties).
+*   **Production Scaling**: For a production application requiring search, sorting, or filtering on nested fields, we would either normalize the data into proper relational tables with foreign keys, or migrate to PostgreSQL and utilize native `JSONB` columns, which support indexing and direct sub-document queries.

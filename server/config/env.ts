@@ -6,7 +6,7 @@ import path from 'path';
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 // Critical variables without which the core security/auth pipeline cannot function.
-const REQUIRED_ENVS = ['JWT_SECRET'] as const;
+const REQUIRED_ENVS = ['JWT_SECRET', 'DATABASE_PATH'] as const;
 
 // 2. Validate critical required keys (Fail-Fast boot check)
 // If any required variables are missing, the server crashes immediately with exit code 1.
@@ -56,5 +56,5 @@ export const env = {
     APP_URL: process.env.APP_URL || 'http://localhost:3000',
     PORT: process.env.PORT || 3001,
     // Define path to database file, defaulting to codelens.db in the project root
-    DATABASE_PATH: process.env.DATABASE_PATH || 'codelens.db',
+    DATABASE_PATH: process.env.DATABASE_PATH!,
 };
