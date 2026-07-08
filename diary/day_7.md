@@ -16,6 +16,8 @@ Today was a study and validation checkpoint. We deliberately broke our database 
 *   **Compile-Time Defaults**: Realized that modern `better-sqlite3` driver compilations enable foreign keys by default, but learned why explicitly setting the pragma in our code is still necessary to maintain environment portability.
 *   **Environmental Replication**: Understanding that Knex migrations aren't just for multi-developer teams, but are critical for solo projects to ensure development, containerized, and cloud-production instances run identical layouts.
 *   **SQLite Concurrency Constraints**: Understanding that SQLite locks the database file on writes, making it ideal for low-concurrency local platforms but problematic under heavy production traffic.
+*   **Migration Semaphore Lock**: The `knex_migrations_lock` table physically holds a row containing an `is_locked` column. Knex sets this column to `1` when a migration run starts and updates it back to `0` when it finishes, acting as a semaphore lock to block concurrent database writes.
+
 
 ---
 
