@@ -17,6 +17,13 @@ const knex = Knex({
     filename: path.resolve(process.cwd(), env.DATABASE_PATH),
   },
   useNullAsDefault: true,
+  // pool: {
+  //   afterCreate: (conn: any, cb: any) => {
+  //     try {
+  //       // Enforce SQLite foreign key constraints on connection boot
+  //       conn.pragma('foreign_keys = ON');
+  //       cb(null, conn);
+  //     } catch (err) {
   pool: {
     afterCreate: (conn: any, cb: any) => {
       try {
